@@ -5,16 +5,29 @@ const menuQuestion = {
     name: "menu",
     type: "list",
     message: "What would you like to do?",
-    choices: ["View all departments", "View all roles", "View all employees", "Add a department","Update a role", "I'm Done"]
+    choices: ["View all departments", "View all roles", "View all employees", "Add a department", "Add a role", "Add an employee", "Update a role", "I'm Done"]
 }
-const addDepartmentQuestions = [
-    {
+const addDepartmentQuestions = {
     name: "department",
     type: "input",
     message: "What is the name of the department?",
-    },
+}
+const addRoleQuestions = [{
+    name: "title",
+    type: "input",
+    message: "What is the title of your role?",
+},
+{
+    name: "salary",
+    type: "input",
+    message: "What is the new role's salary?"
+},
+{
+    name: "departmentId",
+    type: "input",
+    message: "What is your roles department ID?"
+}
 ]
-
 function viewDepartments() { 
     connection.query("SELECT * FROM departments", (err, results) => {
         if (err) {
@@ -49,30 +62,66 @@ async function addDepartment() {
             connection.query(`INSERT INTO departments(name) VALUES (?)`, response.department, (err, results) => {
             if (err) {
                 console.log(err)
-            }
-            console.table(results)
-            
+            }            
+        });
+    })
+    mainMenu()
+}
+async function addRole() {
+    connection.query("SELECT * FROM departments", (err, results) => {
+        console.table(results)
+        if (err) {
+            console.log(err)
+        }
+    })
+    await inquirer
+        .prompt(addRoleQuestions)
+        .then((response) => {
+            connection.query(`INSERT INTO role(title,salary,department_id) VALUES (?,?,?)`, [response.title, response.salary, response.departmentId], (err, results) => {
+                if (err) {
+                    console.log(err)
+                }
+                connection.query("SELECT * FROM role", (err, results) => {
+                    console.table(results)
+            })            
         });
     })
     mainMenu()
 }
 function updateRole() {
-    connection.query("SELECT * FROM employee", (err, results) => {
-        const newQuestions = results.map(obj => {
-            return {name: obj.first_name, value: obj.id}
+    connection.query("SELECT * FROM role", (err, results) => {
+        console.table(results)
+        const rolesChoice = results.map(obj => {
+            return {name: obj.title, value: obj.id};
         })
-        const newQuestion = {
-            name: "menu",
-            type: "list",
-            message: "Who would you like to update?",
-            choices: newQuestions
-        }
-        inquirer
+        connection.query("SELECT * FROM employee", (err, results) => {
+            console.table(results)
+            const employeeChoice = results.map(obj => {
+                return {name: obj.first_name, value: obj.id}
+            })
+            const newQuestion = [{
+                name: "employees",
+                type: "list",
+                message: "Who would you like to update?",
+                choices: employeeChoice
+            },
+            {
+                name: "roles",
+                type: "list",
+                message: "Which would you like to update the employee with?",
+                choices: rolesChoice
+            }]
+            inquirer
             .prompt(newQuestion)
             .then((response) => {
-                console.log(response)
+                connection.query("UPDATE employee SET role_id = ? WHERE id = ?", [response.roles, response.employees], (err, results) => {
+                        connection.query("SELECT * FROM employee", (err, results) => {
+                            console.table(results)
+                            mainMenu()
+                        })
+                    })
             })
-
+        })
     })
 }
 function mainMenu() {
@@ -89,8 +138,12 @@ inquirer
             addDepartment()
         } else if (response.menu === "Update a role") {
             updateRole()
+        } else if (response.menu === "Add an Employee") {
+            addEmployee()
         } else if (response.menu === "I'm Done") {
             return;
+        } else if (response.menu === "Add a role") {
+            addRole()
         }
     })
 }
