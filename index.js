@@ -1,6 +1,7 @@
 const inquirer = require("inquirer")
 require("console.table")
 const connection = require("./connection")
+
 const menuQuestion = {
     name: "menu",
     type: "list",
@@ -26,8 +27,7 @@ const addRoleQuestions = [{
     name: "departmentId",
     type: "input",
     message: "What is your roles department ID?"
-}
-]
+}]
 const addEmployeeQuestions = [{
     name: "firstName",
     type: "input",
@@ -47,8 +47,8 @@ const addEmployeeQuestions = [{
     name: "roleId",
     type: "input",
     message: "What is your employee's role? (Input the roles id)"
-}
-]
+}]
+
 function viewDepartments() {
     connection.query("SELECT * FROM departments", (err, results) => {
         if (err) {
@@ -90,7 +90,6 @@ async function addDepartment() {
                 })
             });
         })
-    
 }
 function addRole() {
     connection.query("SELECT * FROM departments", (err, results) => {
